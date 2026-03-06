@@ -62,7 +62,12 @@ endif
 
 keybindings_dir = get_option('control-center-keybindings-dir')
 if keybindings_dir == ''
-  keybindings_dir = dependency('gnome-keybindings').get_variable(pkgconfig: 'keysdir')
+  gnome_keybindings_dep = dependency('gnome-keybindings', required: false)
+  if gnome_keybindings_dep.found()
+    keybindings_dir = gnome_keybindings_dep.get_variable(pkgconfig: 'keysdir')
+  else
+    keybindings_dir = get_option('datadir') / 'gnome-control-center' / 'keybindings'
+  endif
 endif
 
 libgpaste_deps = [ gio_dep, glib_dep, gobject_dep ]
