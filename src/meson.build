@@ -1,7 +1,9 @@
 subdir('libgpaste')
 subdir('client')
 subdir('daemon')
-subdir('preferences')
+if gtk4_dep.found()
+  subdir('preferences')
+endif
 subdir('ui')
 
 if get_option('gnome-shell')

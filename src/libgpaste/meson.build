@@ -117,67 +117,69 @@ pkg.generate(
   libraries: libgpaste_gtk3_deps,
 )
 
-libgpaste_gtk4_sources = [
-  'gpaste-gtk4/gpaste-gtk-preferences-behaviour-page.c',
-  'gpaste-gtk4/gpaste-gtk-preferences-dialog.c',
-  'gpaste-gtk4/gpaste-gtk-preferences-group.c',
-  'gpaste-gtk4/gpaste-gtk-preferences-history-settings-page.c',
-  'gpaste-gtk4/gpaste-gtk-preferences-manager.c',
-  'gpaste-gtk4/gpaste-gtk-preferences-page.c',
-  'gpaste-gtk4/gpaste-gtk-preferences-shortcuts-page.c',
-  'gpaste-gtk4/gpaste-gtk-preferences-widget.c',
-  'gpaste-gtk4/gpaste-gtk-util.c',
-]
+if gtk4_dep.found()
+  libgpaste_gtk4_sources = [
+    'gpaste-gtk4/gpaste-gtk-preferences-behaviour-page.c',
+    'gpaste-gtk4/gpaste-gtk-preferences-dialog.c',
+    'gpaste-gtk4/gpaste-gtk-preferences-group.c',
+    'gpaste-gtk4/gpaste-gtk-preferences-history-settings-page.c',
+    'gpaste-gtk4/gpaste-gtk-preferences-manager.c',
+    'gpaste-gtk4/gpaste-gtk-preferences-page.c',
+    'gpaste-gtk4/gpaste-gtk-preferences-shortcuts-page.c',
+    'gpaste-gtk4/gpaste-gtk-preferences-widget.c',
+    'gpaste-gtk4/gpaste-gtk-util.c',
+  ]
 
-libgpaste_gtk4_headers = [
-  'gpaste-gtk4/gpaste-gtk-macros.h',
-  'gpaste-gtk4/gpaste-gtk-preferences-behaviour-page.h',
-  'gpaste-gtk4/gpaste-gtk-preferences-dialog.h',
-  'gpaste-gtk4/gpaste-gtk-preferences-group.h',
-  'gpaste-gtk4/gpaste-gtk-preferences-history-settings-page.h',
-  'gpaste-gtk4/gpaste-gtk-preferences-manager.h',
-  'gpaste-gtk4/gpaste-gtk-preferences-page.h',
-  'gpaste-gtk4/gpaste-gtk-preferences-shortcuts-page.h',
-  'gpaste-gtk4/gpaste-gtk-preferences-widget.h',
-  'gpaste-gtk4/gpaste-gtk-util.h',
-]
+  libgpaste_gtk4_headers = [
+    'gpaste-gtk4/gpaste-gtk-macros.h',
+    'gpaste-gtk4/gpaste-gtk-preferences-behaviour-page.h',
+    'gpaste-gtk4/gpaste-gtk-preferences-dialog.h',
+    'gpaste-gtk4/gpaste-gtk-preferences-group.h',
+    'gpaste-gtk4/gpaste-gtk-preferences-history-settings-page.h',
+    'gpaste-gtk4/gpaste-gtk-preferences-manager.h',
+    'gpaste-gtk4/gpaste-gtk-preferences-page.h',
+    'gpaste-gtk4/gpaste-gtk-preferences-shortcuts-page.h',
+    'gpaste-gtk4/gpaste-gtk-preferences-widget.h',
+    'gpaste-gtk4/gpaste-gtk-util.h',
+  ]
 
-libgpaste_gtk4_symbols_file = meson.current_source_dir() / 'libgpaste-gtk4.sym'
+  libgpaste_gtk4_symbols_file = meson.current_source_dir() / 'libgpaste-gtk4.sym'
 
-libgpaste_gtk4_deps = [ libgpaste_internal_dep, libadwaita_dep, gtk4_dep ]
+  libgpaste_gtk4_deps = [ libgpaste_internal_dep, libadwaita_dep, gtk4_dep ]
 
-libgpaste_gtk4 = library(
-  'gpaste-gtk4',
-  sources: libgpaste_gtk4_sources,
-  version: libgpaste_gtk4_soversion,
-  dependencies: libgpaste_gtk4_deps,
-  install: true,
-  install_dir: get_option('libdir'),
-  link_args: ['-Wl,--version-script=' + libgpaste_gtk4_symbols_file],
-)
+  libgpaste_gtk4 = library(
+    'gpaste-gtk4',
+    sources: libgpaste_gtk4_sources,
+    version: libgpaste_gtk4_soversion,
+    dependencies: libgpaste_gtk4_deps,
+    install: true,
+    install_dir: get_option('libdir'),
+    link_args: ['-Wl,--version-script=' + libgpaste_gtk4_symbols_file],
+  )
 
-libgpaste_gtk4_internal_dep = declare_dependency(
-  link_with: libgpaste_gtk4,
-  include_directories: include_directories('.'),
-)
+  libgpaste_gtk4_internal_dep = declare_dependency(
+    link_with: libgpaste_gtk4,
+    include_directories: include_directories('.'),
+  )
 
-install_headers(
-  ['gpaste-gtk4.h'],
-  subdir: 'gpaste-' + apiversion,
-)
-install_headers(
-  libgpaste_gtk4_headers,
-  subdir: 'gpaste-' + apiversion + '/gpaste-gtk4',
-)
+  install_headers(
+    ['gpaste-gtk4.h'],
+    subdir: 'gpaste-' + apiversion,
+  )
+  install_headers(
+    libgpaste_gtk4_headers,
+    subdir: 'gpaste-' + apiversion + '/gpaste-gtk4',
+  )
 
-pkg.generate(
-  libgpaste_gtk4,
-  name: 'GPasteGtk4',
-  filebase: 'gpaste-gtk-4',
-  subdirs: 'gpaste-' + apiversion,
-  description: 'Library to manage GPaste settings and perform graphical operations',
-  libraries: libgpaste_gtk4_deps,
-)
+  pkg.generate(
+    libgpaste_gtk4,
+    name: 'GPasteGtk4',
+    filebase: 'gpaste-gtk-4',
+    subdirs: 'gpaste-' + apiversion,
+    description: 'Library to manage GPaste settings and perform graphical operations',
+    libraries: libgpaste_gtk4_deps,
+  )
+endif
 
 if get_option('introspection')
   libgpaste_gir = gnome.generate_gir(
@@ -202,16 +204,18 @@ if get_option('introspection')
     install: true,
   )
 
-  libgpaste_gtk4_gir = gnome.generate_gir(
-    libgpaste_gtk4,
-    sources: [ libgpaste_gtk4_sources, libgpaste_gtk4_headers ],
-    includes: [ libgpaste_gir[0], 'Adw-1', 'Gtk-4.0', 'Gdk-4.0' ],
-    dependencies: [ ],
-    header: 'gpaste-gtk4.h',
-    namespace: 'GPasteGtk',
-    nsversion: '4',
-    install: true,
-  )
+  if gtk4_dep.found()
+    libgpaste_gtk4_gir = gnome.generate_gir(
+      libgpaste_gtk4,
+      sources: [ libgpaste_gtk4_sources, libgpaste_gtk4_headers ],
+      includes: [ libgpaste_gir[0], 'Adw-1', 'Gtk-4.0', 'Gdk-4.0' ],
+      dependencies: [ ],
+      header: 'gpaste-gtk4.h',
+      namespace: 'GPasteGtk',
+      nsversion: '4',
+      install: true,
+    )
+  endif
 endif
 
 if get_option('vapi')
@@ -229,10 +233,12 @@ if get_option('vapi')
     install: true,
   )
 
-  gnome.generate_vapi(
-    'gpaste-gtk-4',
-    sources: [libgpaste_gtk4_gir[0]],
-    packages: [ libgpaste_vapi, 'gtk4', 'libadwaita-1'],
-    install: true,
-  )
+  if gtk4_dep.found()
+    gnome.generate_vapi(
+      'gpaste-gtk-4',
+      sources: [libgpaste_gtk4_gir[0]],
+      packages: [ libgpaste_vapi, 'gtk4', 'libadwaita-1'],
+      install: true,
+    )
+  endif
 endif
