@@ -112,6 +112,13 @@ void     g_paste_client_track_sync                      (GPasteClient  *self,
 void     g_paste_client_upload_sync                     (GPasteClient  *self,
                                                          const gchar   *uuid,
                                                          GError       **error);
+void     g_paste_client_set_pinned_sync                 (GPasteClient  *self,
+                                                         const gchar   *uuid,
+                                                         gboolean       pinned,
+                                                         GError       **error);
+gboolean g_paste_client_is_pinned_sync                  (GPasteClient  *self,
+                                                         const gchar   *uuid,
+                                                         GError       **error);
 
 GPasteClientItem *g_paste_client_get_element_at_index_sync (GPasteClient  *self,
                                                             guint64        index,
@@ -249,6 +256,15 @@ void g_paste_client_upload                     (GPasteClient       *self,
                                                 const gchar        *uuid,
                                                 GAsyncReadyCallback callback,
                                                 gpointer            user_data);
+void g_paste_client_set_pinned                 (GPasteClient       *self,
+                                                const gchar        *uuid,
+                                                gboolean            pinned,
+                                                GAsyncReadyCallback callback,
+                                                gpointer            user_data);
+void g_paste_client_is_pinned                  (GPasteClient       *self,
+                                                const gchar        *uuid,
+                                                GAsyncReadyCallback callback,
+                                                gpointer            user_data);
 
 /****************************/
 /* Methods / Async - Finish */
@@ -339,6 +355,12 @@ void     g_paste_client_track_finish                      (GPasteClient *self,
                                                            GAsyncResult *result,
                                                            GError      **error);
 void     g_paste_client_upload_finish                     (GPasteClient *self,
+                                                           GAsyncResult *result,
+                                                           GError      **error);
+void     g_paste_client_set_pinned_finish                 (GPasteClient *self,
+                                                           GAsyncResult *result,
+                                                           GError      **error);
+gboolean g_paste_client_is_pinned_finish                  (GPasteClient *self,
                                                            GAsyncResult *result,
                                                            GError      **error);
 

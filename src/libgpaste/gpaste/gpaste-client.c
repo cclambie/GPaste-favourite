@@ -757,6 +757,64 @@ g_paste_client_upload_sync (GPasteClient *self,
     DBUS_CALL_ONE_PARAM_NO_RETURN (UPLOAD, string, uuid);
 }
 
+/**
+ * g_paste_client_set_pinned_sync:
+ * @self: a #GPasteClient instance
+ * @uuid: the uuid of the element to pin/unpin
+ * @pinned: whether the element should be pinned
+ * @error: a #GError
+ *
+ * Set the pinned state of an item
+ */
+G_PASTE_VISIBLE void
+g_paste_client_set_pinned_sync (GPasteClient *self,
+                                const gchar  *uuid,
+                                gboolean      pinned,
+                                GError      **error)
+{
+    GVariant *params[] = {
+        g_variant_new_string (uuid),
+        g_variant_new_boolean (pinned)
+    };
+
+    DBUS_CALL_TWO_PARAMS_NO_RETURN (SET_PINNED, params);
+}
+
+/**
+ * g_paste_client_is_pinned_sync:
+ * @self: a #GPasteClient instance
+ * @uuid: the uuid of the element to check
+ * @error: a #GError
+ *
+ * Check if an item is pinned
+ *
+ * Returns: %TRUE if the item is pinned
+ */
+G_PASTE_VISIBLE gboolean
+g_paste_client_is_pinned_sync (GPasteClient *self,
+                               const gchar  *uuid,
+                               GError      **error)
+{
+    g_return_val_if_fail (_G_PASTE_IS_CLIENT (self), FALSE);
+
+    GVariant *parameter = g_variant_new_string (uuid);
+    g_autoptr (GVariant) result = g_dbus_proxy_call_sync (G_DBUS_PROXY (self),
+                                                          G_PASTE_DAEMON_IS_PINNED,
+                                                          g_variant_new_tuple (&parameter, 1),
+                                                          G_DBUS_CALL_FLAGS_NONE,
+                                                          -1,
+                                                          NULL, /* cancellable */
+                                                          error);
+    if (!result)
+        return FALSE;
+
+    GVariantIter result_iter;
+    g_variant_iter_init (&result_iter, result);
+    g_autoptr (GVariant) variant = g_variant_iter_next_value (&result_iter);
+
+    return g_variant_get_boolean (variant);
+}
+
 /*******************/
 /* Methods / Async */
 /*******************/
@@ -1397,6 +1455,51 @@ g_paste_client_upload (GPasteClient       *self,
     DBUS_CALL_ONE_PARAM_ASYNC (UPLOAD, string, uuid);
 }
 
+/**
+ * g_paste_client_set_pinned:
+ * @self: a #GPasteClient instance
+ * @uuid: the uuid of the element to pin/unpin
+ * @pinned: whether the element should be pinned
+ * @callback: (nullable): A #GAsyncReadyCallback to call when the request is satisfied or %NULL if you don't
+ * care about the result of the method invocation.
+ * @user_data: (nullable): The data to pass to @callback.
+ *
+ * Set the pinned state of an item
+ */
+G_PASTE_VISIBLE void
+g_paste_client_set_pinned (GPasteClient       *self,
+                           const gchar        *uuid,
+                           gboolean            pinned,
+                           GAsyncReadyCallback callback,
+                           gpointer            user_data)
+{
+    GVariant *params[] = {
+        g_variant_new_string (uuid),
+        g_variant_new_boolean (pinned)
+    };
+
+    DBUS_CALL_TWO_PARAMS_ASYNC (SET_PINNED, params);
+}
+
+/**
+ * g_paste_client_is_pinned:
+ * @self: a #GPasteClient instance
+ * @uuid: the uuid of the element to check
+ * @callback: (nullable): A #GAsyncReadyCallback to call when the request is satisfied or %NULL if you don't
+ * care about the result of the method invocation.
+ * @user_data: (nullable): The data to pass to @callback.
+ *
+ * Check if an item is pinned
+ */
+G_PASTE_VISIBLE void
+g_paste_client_is_pinned (GPasteClient       *self,
+                          const gchar        *uuid,
+                          GAsyncReadyCallback callback,
+                          gpointer            user_data)
+{
+    DBUS_CALL_ONE_PARAM_ASYNC (IS_PINNED, string, uuid);
+}
+
 /****************************/
 /* Methods / Async - Finish */
 /****************************/
@@ -1928,6 +2031,51 @@ g_paste_client_upload_finish (GPasteClient *self,
                               GError      **error)
 {
     DBUS_ASYNC_FINISH_NO_RETURN;
+}
+
+/**
+ * g_paste_client_set_pinned_finish:
+ * @self: a #GPasteClient instance
+ * @result: A #GAsyncResult obtained from the #GAsyncReadyCallback passed to the async call.
+ * @error: a #GError
+ *
+ * Set the pinned state of an item
+ */
+G_PASTE_VISIBLE void
+g_paste_client_set_pinned_finish (GPasteClient *self,
+                                  GAsyncResult *result,
+                                  GError      **error)
+{
+    DBUS_ASYNC_FINISH_NO_RETURN;
+}
+
+/**
+ * g_paste_client_is_pinned_finish:
+ * @self: a #GPasteClient instance
+ * @result: A #GAsyncResult obtained from the #GAsyncReadyCallback passed to the async call.
+ * @error: a #GError
+ *
+ * Check if an item is pinned
+ *
+ * Returns: %TRUE if the item is pinned
+ */
+G_PASTE_VISIBLE gboolean
+g_paste_client_is_pinned_finish (GPasteClient *self,
+                                 GAsyncResult *result,
+                                 GError      **error)
+{
+    g_return_val_if_fail (_G_PASTE_IS_CLIENT (self), FALSE);
+    g_return_val_if_fail (G_IS_ASYNC_RESULT (result), FALSE);
+
+    g_autoptr (GVariant) _result = g_dbus_proxy_call_finish (G_DBUS_PROXY (self), result, error);
+    if (!_result)
+        return FALSE;
+
+    GVariantIter result_iter;
+    g_variant_iter_init (&result_iter, _result);
+    g_autoptr (GVariant) variant = g_variant_iter_next_value (&result_iter);
+
+    return g_variant_get_boolean (variant);
 }
 
 /**************/

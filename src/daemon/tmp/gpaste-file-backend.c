@@ -79,6 +79,7 @@ g_paste_file_backend_write_history_file (const GPasteStorageBackend *self,
         GPasteItem *item = history->data;
         const gchar *kind = g_paste_item_get_kind (item);
         const gchar *uuid = g_paste_item_get_uuid (item);
+        gboolean pinned = g_paste_item_is_pinned (item);
 
         if (g_paste_str_equal (kind, "Password"))
             continue;
@@ -91,6 +92,7 @@ g_paste_file_backend_write_history_file (const GPasteStorageBackend *self,
             !g_output_stream_write_all (stream, "\" uuid=\"", 8, NULL, NULL /* cancellable */, NULL /* error */) ||
             !g_output_stream_write_all (stream, uuid, strlen (uuid), NULL, NULL /* cancellable */, NULL /* error */) ||
             (_G_PASTE_IS_IMAGE_ITEM (item) && !_g_paste_file_backend_write_image_metadata (stream, _G_PASTE_IMAGE_ITEM (item))) ||
+            (pinned && !g_output_stream_write_all (stream, "\" pinned=\"true", 14, NULL, NULL /* cancellable */, NULL /* error */)) ||
             !g_output_stream_write_all (stream, "\">\n    <value><![CDATA[", 23, NULL, NULL /*cancellable */, NULL /*error */) ||
             !g_output_stream_write_all (stream, text, strlen (text), NULL, NULL /* cancellable */, NULL /* error */) ||
             !g_output_stream_write_all (stream, "]]></value>\n", 12, NULL, NULL /* cancellable */, NULL /* error */) ||
@@ -157,6 +159,7 @@ typedef struct
     GSList           *special_values;
     HistoryVersion    version;
     GPasteSpecialAtom mime;
+    gboolean          pinned;
 } Data;
 
 #define ASSERT_STATE(x)                                                                               \
@@ -228,6 +231,7 @@ start_tag (GMarkupParseContext *context G_GNUC_UNUSED,
         g_clear_pointer (&data->date, g_free);
         g_clear_pointer (&data->name, g_free);
         g_clear_pointer (&data->text, g_free);
+        data->pinned = FALSE;
         for (const gchar **a = attribute_names, **v = attribute_values; *a && *v; ++a, ++v)
         {
             if (g_paste_str_equal (*a, "kind"))
@@ -265,6 +269,10 @@ start_tag (GMarkupParseContext *context G_GNUC_UNUSED,
                     return;
                 }
                 data->name = g_strdup (*v);
+            }
+            else if (g_paste_str_equal (*a, "pinned"))
+            {
+                data->pinned = g_paste_str_equal (*v, "true");
             }
             else
             {
@@ -339,6 +347,7 @@ add_item (Data *data)
             data->uuid = g_uuid_string_random ();
 
         g_paste_item_set_uuid (item, data->uuid);
+        g_paste_item_set_pinned (item, data->pinned);
         data->history = g_list_append (data->history, item);
         ++data->current_size;;
     }

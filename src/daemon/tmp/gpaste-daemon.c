@@ -401,6 +401,38 @@ g_paste_daemon_private_delete_password (const GPasteDaemonPrivate *priv,
 }
 
 static void
+g_paste_daemon_private_set_pinned (const GPasteDaemonPrivate *priv,
+                                   GVariant                  *parameters,
+                                   GPasteDBusError          **err)
+{
+    GVariantIter params_iter;
+    g_variant_iter_init (&params_iter, parameters);
+
+    g_autoptr (GVariant) uuid_variant = g_variant_iter_next_value (&params_iter);
+    g_autoptr (GVariant) pinned_variant = g_variant_iter_next_value (&params_iter);
+
+    const gchar *uuid = g_variant_get_string (uuid_variant, NULL);
+    gboolean pinned = g_variant_get_boolean (pinned_variant);
+
+    G_PASTE_DBUS_ASSERT (uuid, "no uuid provided");
+    G_PASTE_DBUS_ASSERT (g_paste_history_set_pinned (priv->history, uuid, pinned), "Provided uuid doesn't match any item.");
+}
+
+static GVariant *
+g_paste_daemon_private_is_pinned (const GPasteDaemonPrivate *priv,
+                                  GVariant                  *parameters,
+                                  GPasteDBusError          **err)
+{
+    g_autofree gchar *uuid = g_paste_daemon_get_dbus_string_parameter (parameters, NULL);
+
+    G_PASTE_DBUS_ASSERT_FULL (uuid, "no uuid provided");
+
+    gboolean pinned = g_paste_history_is_pinned (priv->history, uuid);
+
+    return g_variant_new_boolean (pinned);
+}
+
+static void
 g_paste_daemon_private_empty_history (const GPasteDaemonPrivate *priv,
                                       GVariant                  *parameters)
 {
@@ -946,6 +978,10 @@ g_paste_daemon_dbus_method_call (GDBusConnection       *connection     G_GNUC_UN
         g_paste_daemon_track (self, parameters);
     else if (g_paste_str_equal (method_name, G_PASTE_DAEMON_UPLOAD))
         _g_paste_daemon_upload (self, parameters, &err);
+    else if (g_paste_str_equal (method_name, G_PASTE_DAEMON_SET_PINNED))
+        g_paste_daemon_private_set_pinned (priv, parameters, &err);
+    else if (g_paste_str_equal (method_name, G_PASTE_DAEMON_IS_PINNED))
+        answer = g_paste_daemon_private_is_pinned (priv, parameters, &err);
 
     if (error)
         g_dbus_method_invocation_take_error (invocation, error);

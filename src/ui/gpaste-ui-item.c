@@ -300,6 +300,22 @@ g_paste_ui_item_try_load_image (GPasteUiItem *self, const gchar *data)
 }
 
 static void
+g_paste_ui_item_on_pinned_ready (GObject      *source_object G_GNUC_UNUSED,
+                                 GAsyncResult *res,
+                                 gpointer      user_data)
+{
+    GPasteUiItem *self = user_data;
+    const GPasteUiItemPrivate *priv = _g_paste_ui_item_get_instance_private (self);
+    g_autoptr (GError) error = NULL;
+    gboolean pinned = g_paste_client_is_pinned_finish (priv->client, res, &error);
+
+    if (error)
+        return;
+
+    g_paste_ui_item_skeleton_set_pinned (G_PASTE_UI_ITEM_SKELETON (self), pinned);
+}
+
+static void
 g_paste_ui_item_on_kind_ready (GObject      *source_object G_GNUC_UNUSED,
                                GAsyncResult *res,
                                gpointer      user_data)
@@ -322,6 +338,9 @@ g_paste_ui_item_on_kind_ready (GObject      *source_object G_GNUC_UNUSED,
         /* We'll try to detect file paths in the _g_paste_ui_item_ready function */
         g_paste_ui_item_skeleton_set_thumbnail (sk, NULL);
     }
+
+    /* Query the pinned state */
+    g_paste_client_is_pinned (priv->client, priv->uuid, g_paste_ui_item_on_pinned_ready, self);
 
     /* Note: For image items and potential image file paths, _g_paste_ui_item_ready 
      * will try to load the image based on the item's content

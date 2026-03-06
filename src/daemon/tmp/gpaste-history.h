@@ -65,6 +65,12 @@ const GList *g_paste_history_get_history (const GPasteHistory *self);
 guint64      g_paste_history_get_length  (GPasteHistory *self);
 const gchar *g_paste_history_get_current (const GPasteHistory *self);
 
+gboolean     g_paste_history_set_pinned  (GPasteHistory *self,
+                                          const gchar   *uuid,
+                                          gboolean       pinned);
+gboolean     g_paste_history_is_pinned   (GPasteHistory *self,
+                                          const gchar   *uuid);
+
 GStrv g_paste_history_search (GPasteHistory *self,
                               const gchar   *pattern);
 

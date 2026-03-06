@@ -50,6 +50,8 @@ G_BEGIN_DECLS
 #define G_PASTE_DAEMON_SWITCH_HISTORY             "SwitchHistory"
 #define G_PASTE_DAEMON_TRACK                      "Track"
 #define G_PASTE_DAEMON_UPLOAD                     "Upload"
+#define G_PASTE_DAEMON_SET_PINNED                 "SetPinned"
+#define G_PASTE_DAEMON_IS_PINNED                  "IsPinned"
 
 #define G_PASTE_DAEMON_SIG_DELETE_HISTORY "DeleteHistory"
 #define G_PASTE_DAEMON_SIG_EMPTY_HISTORY  "EmptyHistory"
@@ -164,6 +166,14 @@ G_BEGIN_DECLS
         "  </method>"                                                     \
         "  <method name='" G_PASTE_DAEMON_UPLOAD "'>"                     \
         "   <arg type='s' direction='in' name='uuid' />"                  \
+        "  </method>"                                                     \
+        "  <method name='" G_PASTE_DAEMON_SET_PINNED "'>"                 \
+        "   <arg type='s' direction='in' name='uuid' />"                  \
+        "   <arg type='b' direction='in' name='pinned' />"                \
+        "  </method>"                                                     \
+        "  <method name='" G_PASTE_DAEMON_IS_PINNED "'>"                  \
+        "   <arg type='s' direction='in' name='uuid' />"                  \
+        "   <arg type='b' direction='out' name='pinned' />"               \
         "  </method>"                                                     \
         "  <signal name='" G_PASTE_DAEMON_SIG_DELETE_HISTORY "'>"         \
         "   <arg type='s' direction='out' name='history' />"              \

@@ -9,6 +9,7 @@
 #include <gpaste-ui-delete-item.h>
 #include <gpaste-ui-edit-item.h>
 #include <gpaste-ui-item-skeleton.h>
+#include <gpaste-ui-pin-item.h>
 #include <gpaste-ui-upload-item.h>
 
 enum
@@ -27,6 +28,7 @@ typedef struct
     GSList         *actions;
     GtkWidget      *edit;
     GtkWidget      *upload;
+    GtkWidget      *pin;
 
     GtkLabel       *index_label;
     GtkLabel       *label;
@@ -236,6 +238,25 @@ g_paste_ui_item_skeleton_set_uploadable (GPasteUiItemSkeleton *self,
     priv->uploadable = uploadable;
 
     gtk_widget_set_sensitive (priv->upload, uploadable);
+}
+
+/**
+ * g_paste_ui_item_skeleton_set_pinned:
+ * @self: the #GPasteUiItemSkeleton instance
+ * @pinned: whether the item is currently pinned
+ *
+ * Update the pin button state to reflect the current pinned status
+ */
+G_PASTE_VISIBLE void
+g_paste_ui_item_skeleton_set_pinned (GPasteUiItemSkeleton *self,
+                                     gboolean              pinned)
+{
+    g_return_if_fail (_G_PASTE_IS_UI_ITEM_SKELETON (self));
+
+    GPasteUiItemSkeletonPrivate *priv = g_paste_ui_item_skeleton_get_instance_private (self);
+
+    if (priv->pin && _G_PASTE_IS_UI_PIN_ITEM (priv->pin))
+        g_paste_ui_pin_item_set_pinned (G_PASTE_UI_PIN_ITEM (priv->pin), pinned);
 }
 
 /**
@@ -544,14 +565,17 @@ g_paste_ui_item_skeleton_new (GType           type,
     GPasteUiItemSkeletonPrivate *priv = g_paste_ui_item_skeleton_get_instance_private (G_PASTE_UI_ITEM_SKELETON (self));
     GtkWidget *edit = g_paste_ui_edit_item_new (client, rootwin);
     GtkWidget *upload = g_paste_ui_upload_item_new (client);
+    GtkWidget *pin = g_paste_ui_pin_item_new (client);
     GtkWidget *delete = g_paste_ui_delete_item_new (client);
 
     priv->settings = g_object_ref (settings);
     priv->edit = edit;
     priv->upload = upload;
+    priv->pin = pin;
 
     priv->actions = g_slist_prepend (priv->actions, edit);
     priv->actions = g_slist_prepend (priv->actions, upload);
+    priv->actions = g_slist_prepend (priv->actions, pin);
     priv->actions = g_slist_prepend (priv->actions, delete);
 
     g_slist_foreach (priv->actions, add_action, gtk_bin_get_child (GTK_BIN (self)));

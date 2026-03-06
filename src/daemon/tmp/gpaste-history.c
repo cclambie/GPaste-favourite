@@ -233,17 +233,38 @@ g_paste_history_private_check_size (GPasteHistoryPrivate *priv)
     guint64 max_history_size = g_paste_settings_get_max_history_size (priv->settings);
     guint64 length = g_list_length (history);
 
-    if (length > max_history_size)
-    {
-        history = g_list_nth (history, max_history_size);
-        g_return_if_fail (history);
-        history->prev->next = NULL;
-        history->prev = NULL;
+    if (length <= max_history_size)
+        return;
 
-        for (GList *_history = history; _history; _history = g_list_next (_history))
-            priv->size -= g_paste_item_get_size (_history->data);
-        g_list_free_full (history,
-                          g_object_unref);
+    /* Count pinned items - they are protected from removal */
+    guint64 pinned_count = 0;
+    for (GList *h = history; h; h = h->next)
+    {
+        if (g_paste_item_is_pinned (h->data))
+            pinned_count++;
+    }
+
+    /* Calculate how many unpinned items we can keep */
+    guint64 unpinned_slots = (pinned_count >= max_history_size) ? 0 : max_history_size - pinned_count;
+    guint64 unpinned_count = 0;
+
+    /* Remove unpinned items from the end (oldest) until we're within limits */
+    GList *current = g_list_last (history);
+    while (current && length > max_history_size)
+    {
+        GList *prev = current->prev;
+        GPasteItem *item = current->data;
+
+        /* Don't remove pinned items */
+        if (!g_paste_item_is_pinned (item))
+        {
+            priv->size -= g_paste_item_get_size (item);
+            g_object_unref (item);
+            priv->history = g_list_delete_link (priv->history, current);
+            length--;
+        }
+
+        current = prev;
     }
 }
 
@@ -774,6 +795,116 @@ g_paste_history_rename_password (GPasteHistory *self,
         g_paste_password_item_set_name (G_PASTE_PASSWORD_ITEM (item), new_name);
         g_paste_history_update (self, G_PASTE_UPDATE_ACTION_REPLACE, G_PASTE_UPDATE_TARGET_POSITION, index);
     }
+}
+
+/**
+ * g_paste_history_set_pinned:
+ * @self: a #GPasteHistory instance
+ * @uuid: the uuid of the item to pin/unpin
+ * @pinned: whether the item should be pinned
+ *
+ * Set the pinned state of an item in the history.
+ * Pinned items are moved to the end of the list and won't be auto-removed.
+ *
+ * Returns: %TRUE if the item was found and updated
+ */
+G_PASTE_VISIBLE gboolean
+g_paste_history_set_pinned (GPasteHistory *self,
+                            const gchar   *uuid,
+                            gboolean       pinned)
+{
+    g_return_val_if_fail (_G_PASTE_IS_HISTORY (self), FALSE);
+    g_return_val_if_fail (uuid, FALSE);
+
+    GPasteHistoryPrivate *priv = g_paste_history_get_instance_private (self);
+    G_PASTE_LOCK_HISTORY;
+
+    guint64 index = 0;
+    GList *elem = g_paste_history_private_get_item_by_uuid (priv, uuid, &index);
+
+    if (!elem)
+        return FALSE;
+
+    GPasteItem *item = elem->data;
+    gboolean was_pinned = g_paste_item_is_pinned (item);
+
+    if (was_pinned == pinned)
+        return TRUE;
+
+    g_paste_item_set_pinned (item, pinned);
+
+    /* Move item to appropriate position:
+     * - If pinning: move to the end (after other pinned items)
+     * - If unpinning: move to after the first item (most recent) but before pinned items
+     */
+    if (pinned)
+    {
+        /* Move to the end of the list */
+        priv->history = g_list_remove_link (priv->history, elem);
+        priv->history = g_list_concat (priv->history, elem);
+    }
+    else
+    {
+        /* Move unpinned item to position 1 (after the currently selected first item)
+         * but before any pinned items at the end */
+        priv->history = g_list_remove_link (priv->history, elem);
+
+        /* Find the first pinned item position */
+        GList *insert_before = NULL;
+        guint64 pos = 0;
+        for (GList *h = priv->history; h; h = h->next, pos++)
+        {
+            if (pos > 0 && g_paste_item_is_pinned (h->data))
+            {
+                insert_before = h;
+                break;
+            }
+        }
+
+        if (insert_before)
+        {
+            /* Insert before the first pinned item */
+            priv->history = g_list_insert_before (priv->history, insert_before, elem->data);
+            g_list_free_1 (elem);
+        }
+        else
+        {
+            /* No pinned items found, insert at position 1 */
+            priv->history = g_list_insert (priv->history, elem->data, 1);
+            g_list_free_1 (elem);
+        }
+    }
+
+    g_paste_history_update (self, G_PASTE_UPDATE_ACTION_REPLACE, G_PASTE_UPDATE_TARGET_ALL, 0);
+
+    return TRUE;
+}
+
+/**
+ * g_paste_history_is_pinned:
+ * @self: a #GPasteHistory instance
+ * @uuid: the uuid of the item to check
+ *
+ * Check if an item is pinned
+ *
+ * Returns: %TRUE if the item is pinned, %FALSE otherwise
+ */
+G_PASTE_VISIBLE gboolean
+g_paste_history_is_pinned (GPasteHistory *self,
+                           const gchar   *uuid)
+{
+    g_return_val_if_fail (_G_PASTE_IS_HISTORY (self), FALSE);
+    g_return_val_if_fail (uuid, FALSE);
+
+    GPasteHistoryPrivate *priv = g_paste_history_get_instance_private (self);
+    G_PASTE_LOCK_HISTORY;
+
+    GPasteItem *item = g_paste_history_private_get_by_uuid (priv, uuid);
+
+    if (!item)
+        return FALSE;
+
+    return g_paste_item_is_pinned (item);
 }
 
 /**

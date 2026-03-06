@@ -13,11 +13,12 @@
 
 typedef struct
 {
-    gchar  *uuid;
-    gchar  *value;
-    GSList *special_values;
-    gchar  *display_string;
-    guint64 size;
+    gchar    *uuid;
+    gchar    *value;
+    GSList   *special_values;
+    gchar    *display_string;
+    guint64   size;
+    gboolean  pinned;
 } GPasteItemPrivate;
 
 G_PASTE_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (Item, item, G_TYPE_OBJECT)
@@ -345,6 +346,42 @@ g_paste_item_set_uuid (GPasteItem  *self,
 
     g_free (priv->uuid);
     priv->uuid = g_strdup (uuid);
+}
+
+/**
+ * g_paste_item_is_pinned:
+ * @self: a #GPasteItem instance
+ *
+ * Check if the item is pinned
+ *
+ * Returns: %TRUE if the item is pinned, %FALSE otherwise
+ */
+G_PASTE_VISIBLE gboolean
+g_paste_item_is_pinned (const GPasteItem *self)
+{
+    g_return_val_if_fail (_G_PASTE_IS_ITEM (self), FALSE);
+
+    const GPasteItemPrivate *priv = _g_paste_item_get_instance_private (self);
+
+    return priv->pinned;
+}
+
+/**
+ * g_paste_item_set_pinned:
+ * @self: a #GPasteItem instance
+ * @pinned: whether the item should be pinned
+ *
+ * Set whether the item is pinned
+ */
+G_PASTE_VISIBLE void
+g_paste_item_set_pinned (GPasteItem *self,
+                         gboolean    pinned)
+{
+    g_return_if_fail (_G_PASTE_IS_ITEM (self));
+
+    GPasteItemPrivate *priv = g_paste_item_get_instance_private (self);
+
+    priv->pinned = pinned;
 }
 
 static void
