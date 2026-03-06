@@ -425,7 +425,7 @@ g_paste_daemon_private_is_pinned (const GPasteDaemonPrivate *priv,
 {
     g_autofree gchar *uuid = g_paste_daemon_get_dbus_string_parameter (parameters, NULL);
 
-    G_PASTE_DBUS_ASSERT_FULL (uuid, "no uuid provided");
+    G_PASTE_DBUS_ASSERT_FULL (uuid, "no uuid provided", NULL);
 
     gboolean pinned = g_paste_history_is_pinned (priv->history, uuid);
 

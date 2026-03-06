@@ -11,11 +11,11 @@ i18n = import('i18n')
 apiversion = '2'
 
 adwaita_req_version = '1.5'
-gcr_req_version = '3.90.0'
+gcr_req_version = '3.30.0'
 gdk_pixbuf_req_version = '2.38.0'
 gjs_req_version = '1.78.0'
 glib_req_version = '2.70.0'
-gtk3_req_version = '3.24.0'
+gtk3_req_version = '3.2.0'
 gtk4_req_version = '4.6.0'
 
 adwaita_req = '>= @0@'.format(adwaita_req_version)
@@ -26,15 +26,15 @@ glib_req = '>= @0@'.format(glib_req_version)
 gtk3_req = '>= @0@'.format(gtk3_req_version)
 gtk4_req = '>= @0@'.format(gtk4_req_version)
 
-gcr_dep = dependency('gcr-4', version: gcr_req)
+gcr_dep = dependency('gcr-3', version: gcr_req)
 gdk3_dep = dependency('gdk-3.0', version: gtk3_req)
 gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0', version: gdk_pixbuf_req)
 gio_dep = dependency('gio-2.0', version: glib_req)
 glib_dep = dependency('glib-2.0', version: glib_req)
-gobject_dep = dependency('gobject-2.0', version: glib_req)
+gobject_dep = dependency('gobject-2.0', version: glib_req, required:false)
 gtk3_dep = dependency('gtk+-3.0', version: gtk3_req)
-gtk4_dep = dependency('gtk4', version: gtk4_req)
-libadwaita_dep = dependency('libadwaita-1', version: adwaita_req)
+gtk4_dep = dependency('gtk4', version: gtk4_req, required:false)
+libadwaita_dep = dependency('libadwaita-1', version: adwaita_req, required:false)
 
 glib_major = glib_req_version.split('.')[0].to_int()
 glib_minor = glib_req_version.split('.')[1].to_int()
@@ -60,6 +60,11 @@ if dbus_service_dir == ''
   dbus_service_dir = dependency('dbus-1').get_variable(pkgconfig: 'session_bus_services_dir')
 endif
 
+#keybindings_dir = get_option('control-center-keybindings-dir')
+#if keybindings_dir == ''
+#  keybindings_dir = dependency('gnome-keybindings',required:false).get_variable(pkgconfig: 'keysdir')
+#endif
+
 keybindings_dir = get_option('control-center-keybindings-dir')
 if keybindings_dir == ''
   gnome_keybindings_dep = dependency('gnome-keybindings', required: false)
@@ -73,8 +78,8 @@ endif
 libgpaste_deps = [ gio_dep, glib_dep, gobject_dep ]
 
 if get_option('gnome-shell')
-  gjs_dep = dependency('gjs-1.0', version: gjs_req)
-  pango_dep = dependency('pango')
+  gjs_dep = dependency('gjs-1.0', version: gjs_req, required:false)
+  pango_dep = dependency('pango', required:false)
 endif
 
 userunit_dir = get_option('systemd-user-unit-dir')
