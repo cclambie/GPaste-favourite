@@ -244,9 +244,8 @@ g_paste_history_private_check_size (GPasteHistoryPrivate *priv)
             pinned_count++;
     }
 
-    /* Calculate how many unpinned items we can keep */
-    guint64 unpinned_slots = (pinned_count >= max_history_size) ? 0 : max_history_size - pinned_count;
-    guint64 unpinned_count = 0;
+    /* Suppress unused variable warning */
+    (void)pinned_count;
 
     /* Remove unpinned items from the end (oldest) until we're within limits */
     GList *current = g_list_last (history);

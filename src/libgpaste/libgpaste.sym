@@ -57,6 +57,9 @@ global:
     g_paste_client_get_type;
     g_paste_client_get_version;
     g_paste_client_is_active;
+    g_paste_client_is_pinned;
+    g_paste_client_is_pinned_finish;
+    g_paste_client_is_pinned_sync;
     g_paste_client_list_histories;
     g_paste_client_list_histories_finish;
     g_paste_client_list_histories_sync;
@@ -87,6 +90,9 @@ global:
     g_paste_client_set_password;
     g_paste_client_set_password_finish;
     g_paste_client_set_password_sync;
+    g_paste_client_set_pinned;
+    g_paste_client_set_pinned_finish;
+    g_paste_client_set_pinned_sync;
     g_paste_client_show_history;
     g_paste_client_show_history_finish;
     g_paste_client_show_history_sync;
